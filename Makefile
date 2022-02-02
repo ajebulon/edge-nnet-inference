@@ -4,15 +4,15 @@ CFLAGS += -ggdb3 -std=gnu99
 LDFLAGS += -lm
 
 PROGS = main
-TESTS = activation-test forward-test
+TESTS = activation_test layer_test
 
 main: main.o
 	$(CC) $(CFLAGS) -Wall -Werror $^ -o $@ $(LDFLAGS)
 
-activation-test: activation_test.o activation.o
+activation_test: activation_test.o activation.o
 	$(CC) $(CFLAGS) -Wall -Werror $^ -o $@ $(LDFLAGS)
 
-forward-test: forward_test.o activation.o initialization.o
+layer_test: layer_test.o layer.o activation.o initialization.o 
 	$(CC) $(CFLAGS) -Wall -Werror $^ -o $@ $(LDFLAGS)
 
 .PHONY: tests
