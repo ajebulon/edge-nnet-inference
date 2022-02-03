@@ -46,12 +46,13 @@ int main(int argc, char *argv[]) {
     denseInputShow(*test_input);
 
     uint32_t layer_count = 4;
-    uint32_t layers[4] = {4, 3, 2, 1};
+    uint32_t layers[4] = {2, 3, 4, 1};
     activation acts[4] = {ACTIVATION_LINEAR, ACTIVATION_LINEAR, ACTIVATION_LINEAR, ACTIVATION_LINEAR};
     // activation acts[4] = {ACTIVATION_RELU, ACTIVATION_RELU, ACTIVATION_RELU, ACTIVATION_SIGMOID};
 
     for (int layer = 0; layer < layer_count; layer++) {
         dense_layer_t *test_layer = denseLayerInit(test_input->x_count, layers[layer], INIT_ONE);
+        denseLayerShow(*test_layer);
 
         dense_input_t *temp = test_input;
         test_input = denseForwardStep(*test_input, *test_layer, acts[layer]);

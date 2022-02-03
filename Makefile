@@ -15,7 +15,7 @@ activation_test: activation_test.o activation.o
 layer_test: layer_test.o layer.o activation.o initialization.o 
 	$(CC) $(CFLAGS) -Wall -Werror $^ -o $@ $(LDFLAGS)
 
-read_test: read_test.o
+read_test: read_test.o layer.o activation.o initialization.o
 	$(CC) $(CFLAGS) -Wall -Werror $^ -o $@ $(LDFLAGS)
 
 .PHONY: tests
