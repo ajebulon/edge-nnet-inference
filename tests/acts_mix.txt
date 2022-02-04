@@ -1,2 +1,4 @@
 relu
+relu
+relu
 sigmoid

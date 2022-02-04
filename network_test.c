@@ -7,8 +7,8 @@
 int main(int argc, char *argv[]) {
 
     /* Given input filename of activation function and weights */
-    char act_fname[64] = "tests/acts_nand.txt";
-    char weight_fname[64] = "tests/weights_nand.txt";
+    char act_fname[64] = "tests/acts_mix.txt";
+    char weight_fname[64] = "tests/weights_mix.txt";
 
     // Create network
     dense_network_t *dense_net = NULL;
@@ -19,10 +19,11 @@ int main(int argc, char *argv[]) {
 
     // Create sample input
     dense_input_t *test_input = NULL;
-    float *x_test = (float *)malloc(2 * sizeof(float));
-    x_test[0] = 1.0;
+    float *x_test = (float *)malloc(3 * sizeof(float));
+    x_test[0] = 5.0;
     x_test[1] = 1.0;
-    test_input = denseInputInit(2, x_test);
+    x_test[2] = 0.0;
+    test_input = denseInputInit(3, x_test);
     printf("Input\n==============================\n");
     denseInputShow(*test_input);
     printf("\n");
@@ -32,7 +33,6 @@ int main(int argc, char *argv[]) {
     printf("Output\n==============================\n");
     denseInputShow(*y_hat);
     printf("\n");
-
 
     // Cleanup
     denseInputDeinit(y_hat);

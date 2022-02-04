@@ -4,9 +4,9 @@ CFLAGS += -ggdb3 -std=gnu99
 LDFLAGS += -lm
 
 PROGS = main
-TESTS = activation_test layer_test read_test
+TESTS = activation_test layer_test network_test
 
-main: main.o network.o layer.o activation.o initialization.o
+network_test: network_test.o network.o layer.o activation.o initialization.o
 	$(CC) $(CFLAGS) -Wall -Werror $^ -o $@ $(LDFLAGS)
 
 activation_test: activation_test.o activation.o
