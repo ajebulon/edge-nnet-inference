@@ -11,6 +11,7 @@ typedef struct dense_layer {
     uint32_t this_num_unit;
     float **w;
     float *b;
+    activation func;
 } dense_layer_t;
 
 typedef struct dense_input {

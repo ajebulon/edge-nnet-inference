@@ -6,6 +6,13 @@
 #include "activation.h"
 #include "layer.h"
 
+typedef struct dense_network {
+    uint32_t layer_count;
+    uint32_t *layer_units;
+    activation *funcs;
+    dense_layer_t *layers;
+} dense_network_t;
+
 #define FLOAT_DIGIT 64
 
 int getLayerCount(char *act_fname) {
@@ -111,19 +118,22 @@ void getActivation(char *act_fname, activation *funcs) {
         return;
     }
 
+    char act_name[16] = {0};
     while ((nread = getline(&line, &len, f)) != -1) {
-        printf("line [%ld]: %s", strlen(line), line);
+        memset(act_name, 0, 16);
 
-        printf("ret: %d\n", strcmp(line, "relu"));
-        if (strcmp(line, "relu") == 13) {
+        /* Remove newline and EOS */
+        strncpy(act_name, line, strlen(line) - 2);
+
+        if (strcmp(act_name, "relu") == 0) {
             funcs[layer_count] = ACTIVATION_RELU;
-        } else if (strcmp(line, "sigmoid") == 13) {
+        } else if (strcmp(act_name, "sigmoid") == 0) {
             funcs[layer_count] = ACTIVATION_SIGMOID;
-        } else if (strcmp(line, "tanh") == 13) {
+        } else if (strcmp(act_name, "tanh") == 0) {
             funcs[layer_count] = ACTIVATION_TANH;
-        } else if (strcmp(line, "linear") == 13) {
+        } else if (strcmp(act_name, "linear") == 0) {
             funcs[layer_count] = ACTIVATION_LINEAR;
-        } else if (strcmp(line, "leaky") == 13) {
+        } else if (strcmp(act_name, "leaky") == 0) {
             funcs[layer_count] = ACTIVATION_LEAKYRELU;
         } 
 
@@ -135,12 +145,151 @@ void getActivation(char *act_fname, activation *funcs) {
 }
 
 
-dense_input_t *getNetworkPredict(char *weight_fname, char *act_fname, dense_input_t x) {
+void parseStringToWeights(char *line, float ***w) {
+    char c;
+    bool row_start = false;
+    bool col_start = false;
+    bool parse_ok = false;
+    char str_float[FLOAT_DIGIT];
+    int str_float_idx = 0;
+    float real_float;
+    int row_size = 0;
+    int elem_size = 0;
+
+    while ((c = *line) != '\0') {
+        if (c == '[') {
+            if (!row_start) {
+                row_start = true;
+            } else {
+                col_start = true;
+            }
+        } else if (c == ']') {
+            if (col_start) {
+                col_start = false;
+
+                if (parse_ok) {
+                    real_float = atof(str_float);
+                    (*w)[elem_size][row_size] = real_float;
+                    row_size++;
+                    elem_size = 0;
+                    memset(str_float, 0, FLOAT_DIGIT);
+                    str_float_idx = 0;
+                    parse_ok = false;
+                }              
+            } else { 
+                row_start = false;
+            }
+        } else if (c == ',') {
+            if (parse_ok) {
+                real_float = atof(str_float);
+                (*w)[elem_size][row_size] = real_float;
+                elem_size++;
+                memset(str_float, 0, FLOAT_DIGIT);
+                str_float_idx = 0;
+            }
+        } else {
+            str_float[str_float_idx] = c;
+            str_float_idx++;
+            parse_ok = true;
+        }
+
+        line++;
+    }
+}
+
+void parseStringToBiases(char *line, float **b) {
+    char c;
+    bool row_start = false;
+    bool col_start = false;
+    bool parse_ok = false;
+    char str_float[FLOAT_DIGIT];
+    int str_float_idx = 0;
+    float real_float;
+    int row_size = 0;
+    int elem_size = 0;
+
+    while ((c = *line) != '\0') {
+        if (c == '[') {
+            if (!row_start) {
+                row_start = true;
+            } else {
+                col_start = true;
+            }
+        } else if (c == ']') {
+            if (col_start) {
+                col_start = false;
+
+                if (parse_ok) {
+                    real_float = atof(str_float);
+                    (*b)[elem_size] = real_float;
+                    row_size++;
+                    elem_size = 0;
+                    memset(str_float, 0, FLOAT_DIGIT);
+                    str_float_idx = 0;
+                    parse_ok = false;
+                }              
+            } else { 
+                row_start = false;
+            }
+        } else if (c == ',') {
+            if (parse_ok) {
+                real_float = atof(str_float);
+                (*b)[elem_size] = real_float;
+                elem_size++;
+                memset(str_float, 0, FLOAT_DIGIT);
+                str_float_idx = 0;
+            }
+        } else {
+            str_float[str_float_idx] = c;
+            str_float_idx++;
+            parse_ok = true;
+        }
+
+        line++;
+    }
+}
+
+void updateLayerWeightsFromFile(char *weight_fname, dense_layer_t *layer, uint32_t layer_idx) {
+    FILE *f;
+
+    ssize_t read;
+    char *line = NULL;
+    size_t len = 0;
+
+    if ((f = fopen(weight_fname, "r")) == NULL) {
+        fprintf(stderr, "Error- Unable to open %s\n", weight_fname);
+        return;
+    }
+
+    int file_row_count = 0;
+    while ((read = getline(&line, &len, f)) != -1) {
+        if (file_row_count / 2 == layer_idx) {
+            if (file_row_count % 2 == 0) {
+                printf("w[%ld]: %s", strlen(line), line);
+                parseStringToWeights(line, &layer->w);
+            } else {
+                printf("b[%ld]: %s", strlen(line), line);
+                parseStringToBiases(line, &layer->b);
+            }
+        }
+        file_row_count++;
+    }
+
+
+    fclose(f);
+    free(line);
+}
+
+dense_network_t *createNetwork(char *weight_fname, char *act_fname) {
     /* Get layer count */
     /* Get list of activation function */
     /* Get list of layer units *?
     /* Modify layer unit's weight based on file */
     /* Iterate all layer and predict */
+}
+
+dense_input_t *getNetworkPredict(dense_network_t network, dense_input_t x) {
+
 }
 
 int main(int argc, char *argv[]) {
@@ -236,8 +385,13 @@ int main(int argc, char *argv[]) {
     }
     
     
-    for (int layer = 1; layer < layer_count; layer++) {
-        dense_layer_t *test_layer = denseLayerInit(layers[layer-1], layers[layer], INIT_ONE);
+    for (int layer_idx = 0; layer_idx < layer_count; layer_idx++) {
+        printf("layer-idx [%d]\n", layer_idx);
+        dense_layer_t *test_layer = denseLayerInit(layers[layer_idx], layers[layer_idx+1], INIT_ONE);
+
+        /* Modify weight */
+        updateLayerWeightsFromFile("tests/weights_xor.txt", test_layer, layer_idx);
+
         denseLayerShow(*test_layer);
         denseLayerDeinit(test_layer);
     }
@@ -247,55 +401,6 @@ int main(int argc, char *argv[]) {
     free(layers);
 
 
-
-
-    // int c;
-    // bool group_start = false;
-    // bool array_start = false;
-    // char str_float[64];
-    // int str_float_idx = 0;
-    // float real_float;
-    // int array_cnt = 0;
-
-    // while ((c = fgetc(f)) != EOF) {
-    //     printf("%c", (char)c);
-
-    //     if (c == '[') {
-    //         if (!group_start) {
-    //             group_start = true;
-    //             printf("  >\n");
-    //             continue;
-    //         } else {
-    //             array_start = true;
-    //             printf("    >>\n");
-    //             continue;
-    //         }
-    //     } else if (c == ',' || c == ']') {
-    //         real_float = atof(str_float);
-    //         printf("\nval: %.6f\n\n", real_float);
-    //         memset(str_float, 0, 64);
-    //         str_float_idx = 0;
-    //     } else if (c == ']') {
-    //         if (array_start) {                
-    //             array_start = false;
-    //             printf("    <<\n");
-    //             continue;
-    //         } else {
-    //             group_start = false;
-    //             printf("  <\n");
-    //             continue;
-    //         }
-    //     } else if (c == '\n') {
-    //         array_start = false;
-    //         group_start = false;
-    //         memset(str_float, 0, 64);
-    //         str_float_idx = 0;
-    //         continue;
-    //     } else {
-    //         str_float[str_float_idx] = c;
-    //         str_float_idx++;
-    //     }
-    // }
 
     return 0;
 }
