@@ -19,12 +19,12 @@ int main(int argc, char *argv[]) {
 
     /* Test dense layer */
     dense_layer_t *this_layer = NULL;
-    this_layer = denseLayerInit(3, 1, INIT_ONE);
+    this_layer = denseLayerInit(3, 1, INIT_ONE, ACTIVATION_RELU);
     denseLayerShow(*this_layer);
 
     /* Test dense forward step */
     dense_input_t *forward = NULL;
-    forward = denseForwardStep(*this_input, *this_layer, ACTIVATION_RELU);
+    forward = denseForwardStep(*this_input, *this_layer);
     denseInputShow(*forward);
 
     /* Cleanup */
@@ -51,11 +51,11 @@ int main(int argc, char *argv[]) {
     // activation acts[4] = {ACTIVATION_RELU, ACTIVATION_RELU, ACTIVATION_RELU, ACTIVATION_SIGMOID};
 
     for (int layer = 0; layer < layer_count; layer++) {
-        dense_layer_t *test_layer = denseLayerInit(test_input->x_count, layers[layer], INIT_ONE);
+        dense_layer_t *test_layer = denseLayerInit(test_input->x_count, layers[layer], INIT_ONE, acts[layer]);
         denseLayerShow(*test_layer);
 
         dense_input_t *temp = test_input;
-        test_input = denseForwardStep(*test_input, *test_layer, acts[layer]);
+        test_input = denseForwardStep(*test_input, *test_layer);
 
         denseLayerDeinit(test_layer);
         denseInputDeinit(temp);

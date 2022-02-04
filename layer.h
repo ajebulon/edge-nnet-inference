@@ -29,7 +29,7 @@ void denseInputDeinit(dense_input_t *this);
 void denseInputShow(dense_input_t this);
 
 /* Create dense layer object */
-dense_layer_t *denseLayerInit(uint32_t prev_num_unit, uint32_t this_num_unit, initalization method);
+dense_layer_t *denseLayerInit(uint32_t prev_num_unit, uint32_t this_num_unit, initalization method, activation func);
 
 /* Delete dense layer object */
 void denseLayerDeinit(dense_layer_t *this);
@@ -38,7 +38,7 @@ void denseLayerDeinit(dense_layer_t *this);
 void denseLayerShow(dense_layer_t this);
 
 /* Single dense layer forward */
-dense_input_t *denseForwardStep(dense_input_t input, dense_layer_t layer, activation func);
+dense_input_t *denseForwardStep(dense_input_t input, dense_layer_t layer);
 
 
 #endif /* LAYER_H */

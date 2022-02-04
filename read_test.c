@@ -387,7 +387,7 @@ int main(int argc, char *argv[]) {
     
     for (int layer_idx = 0; layer_idx < layer_count; layer_idx++) {
         printf("layer-idx [%d]\n", layer_idx);
-        dense_layer_t *test_layer = denseLayerInit(layers[layer_idx], layers[layer_idx+1], INIT_ONE);
+        dense_layer_t *test_layer = denseLayerInit(layers[layer_idx], layers[layer_idx+1], INIT_ONE, ACTIVATION_RELU);
 
         /* Modify weight */
         updateLayerWeightsFromFile("tests/weights_xor.txt", test_layer, layer_idx);

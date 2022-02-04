@@ -26,10 +26,11 @@ void denseInputShow(dense_input_t this) {
 }
 
 /* Create dense layer object */
-dense_layer_t *denseLayerInit(uint32_t prev_num_unit, uint32_t this_num_unit, initalization method) {
+dense_layer_t *denseLayerInit(uint32_t prev_num_unit, uint32_t this_num_unit, initalization method, activation func) {
     dense_layer_t *new = (dense_layer_t *)malloc(sizeof(dense_layer_t));
     new->prev_num_unit = prev_num_unit;
     new->this_num_unit = this_num_unit;
+    new->func = func;
 
     /* Initialize w-matrix */
     new->w = (float **)malloc(new->this_num_unit * sizeof(float *));
@@ -74,8 +75,9 @@ void denseLayerShow(dense_layer_t this) {
 }
 
 /* Single dense layer forward */
-dense_input_t *denseForwardStep(dense_input_t input, dense_layer_t layer, activation func) {
+dense_input_t *denseForwardStep(dense_input_t input, dense_layer_t layer) {
     dense_input_t *a = (dense_input_t *)malloc(sizeof(dense_input_t));
+    activation func = layer.func;
     a->x_count = layer.this_num_unit;
     
     /* Matrix multiplication */
