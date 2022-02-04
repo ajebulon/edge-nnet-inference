@@ -3,19 +3,11 @@
 #include <stdbool.h>
 #include <string.h>
 
-#include "activation.h"
-#include "layer.h"
+#include "network.h"
 
-typedef struct dense_network {
-    uint32_t layer_count;
-    uint32_t *layer_units;
-    activation *funcs;
-    dense_layer_t *layers;
-} dense_network_t;
 
-#define FLOAT_DIGIT 64
-
-int getLayerCount(char *act_fname) {
+/* Get number of layer from file */
+int getLayerCountFromFile(char *act_fname) {
     FILE *f;
     int layer_count = 0;
 
@@ -40,7 +32,9 @@ int getLayerCount(char *act_fname) {
     return layer_count;
 }
 
-int getLayerUnits(char *weight_fname, int *layers) {
+
+/* Retrieve number of units per layer, including input layer, from file */
+int getLayerUnitsWithInputFromFile(char *weight_fname, int *layers) {
     FILE *f;
 
     if ((f = fopen(weight_fname, "r")) == NULL) {
@@ -103,54 +97,17 @@ int getLayerUnits(char *weight_fname, int *layers) {
         }
     }
 
-}
-
-void getActivation(char *act_fname, activation *funcs) {
-    FILE *f;
-    int layer_count = 0;
-
-    char *line = NULL;
-    size_t len = 0;
-    ssize_t nread;
-
-    if ((f = fopen(act_fname, "r")) == NULL) {
-        fprintf(stderr, "Error- Unable to open %s\n", act_fname);
-        return;
-    }
-
-    char act_name[16] = {0};
-    while ((nread = getline(&line, &len, f)) != -1) {
-        memset(act_name, 0, 16);
-
-        /* Remove newline and EOS */
-        strncpy(act_name, line, strlen(line) - 2);
-
-        if (strcmp(act_name, "relu") == 0) {
-            funcs[layer_count] = ACTIVATION_RELU;
-        } else if (strcmp(act_name, "sigmoid") == 0) {
-            funcs[layer_count] = ACTIVATION_SIGMOID;
-        } else if (strcmp(act_name, "tanh") == 0) {
-            funcs[layer_count] = ACTIVATION_TANH;
-        } else if (strcmp(act_name, "linear") == 0) {
-            funcs[layer_count] = ACTIVATION_LINEAR;
-        } else if (strcmp(act_name, "leaky") == 0) {
-            funcs[layer_count] = ACTIVATION_LEAKYRELU;
-        } 
-
-        layer_count++;
-    }
-
-    free(line);
     fclose(f);
 }
 
 
+/* Parse line string to retrieve weights in 2D shape */
 void parseStringToWeights(char *line, float ***w) {
     char c;
     bool row_start = false;
     bool col_start = false;
     bool parse_ok = false;
-    char str_float[FLOAT_DIGIT];
+    char str_float[FLOAT_DIGIT] = {};
     int str_float_idx = 0;
     float real_float;
     int row_size = 0;
@@ -197,12 +154,14 @@ void parseStringToWeights(char *line, float ***w) {
     }
 }
 
+
+/* Parse line string to retrieve biases in 2D shape */
 void parseStringToBiases(char *line, float **b) {
     char c;
     bool row_start = false;
     bool col_start = false;
     bool parse_ok = false;
-    char str_float[FLOAT_DIGIT];
+    char str_float[FLOAT_DIGIT] = {};
     int str_float_idx = 0;
     float real_float;
     int row_size = 0;
@@ -249,6 +208,8 @@ void parseStringToBiases(char *line, float **b) {
     }
 }
 
+
+/* Update initialized layer with parsed weights from file */
 void updateLayerWeightsFromFile(char *weight_fname, dense_layer_t *layer, uint32_t layer_idx) {
     FILE *f;
 
@@ -265,10 +226,8 @@ void updateLayerWeightsFromFile(char *weight_fname, dense_layer_t *layer, uint32
     while ((read = getline(&line, &len, f)) != -1) {
         if (file_row_count / 2 == layer_idx) {
             if (file_row_count % 2 == 0) {
-                printf("w[%ld]: %s", strlen(line), line);
                 parseStringToWeights(line, &layer->w);
             } else {
-                printf("b[%ld]: %s", strlen(line), line);
                 parseStringToBiases(line, &layer->b);
             }
         }
@@ -280,127 +239,112 @@ void updateLayerWeightsFromFile(char *weight_fname, dense_layer_t *layer, uint32
     free(line);
 }
 
-dense_network_t *createNetwork(char *weight_fname, char *act_fname) {
-    /* Get layer count */
-    /* Get list of activation function */
-    /* Get list of layer units *?
-    /* Modify layer unit's weight based on file */
-    /* Iterate all layer and predict */
-}
 
-dense_input_t *getNetworkPredict(dense_network_t network, dense_input_t x) {
-
-}
-
-int main(int argc, char *argv[]) {
-    char filename[64] = "tests/weights_xor.txt";
+/* Update initialized layer with parsed activation function from file */
+void updateLayerActivationFromFile(char *act_fname, dense_layer_t *layer, uint32_t layer_idx) {
     FILE *f;
+    int layer_count = 0;
 
-    if ((f = fopen(filename, "r")) == NULL) {
-        fprintf(stderr, "Error- Unable to open %s\n", filename);
-        exit(EXIT_FAILURE);
+    ssize_t read;
+    char *line = NULL;
+    size_t len = 0;
+
+    if ((f = fopen(act_fname, "r")) == NULL) {
+        fprintf(stderr, "Error- Unable to open %s\n", act_fname);
+        return;
     }
 
-    char c;
-    bool row_start = false;
-    bool col_start = false;
-    bool parse_ok = false;
-    char str_float[FLOAT_DIGIT];
-    int str_float_idx = 0;
-    float real_float;
-    int row_size = 0;
-    int elem_size = 0;
-    while ((c = fgetc(f)) != EOF) {
-        // printf("%c", c);
+    char act_name[16] = {0};
+    int file_row_count = 0;
+    while ((read = getline(&line, &len, f)) != -1) {
+        if (file_row_count == layer_idx) {
+            memset(act_name, 0, 16);
 
-        if (c == '[') {
-            if (!row_start) { // COL has not started
-                row_start = true;
-                // printf("\n\t>\n");
-            } else { // Start COL when [ is found if ROW already start
-                col_start = true;
-                // printf("\n\t\t>\n");
-            }
-        } else if (c == ']') {
-            if (col_start) { // Stop processing COL-wise
-                col_start = false;
-                // printf("\n\t\t<\n");
+            /* Remove newline and EOS */
+            strncpy(act_name, line, strlen(line) - 2);
 
-                if (parse_ok) {
-                    real_float = atof(str_float);
-                    printf("%.6f ", real_float);
-                    row_size++;
-                    memset(str_float, 0, FLOAT_DIGIT);
-                    str_float_idx = 0;
-                    parse_ok = false;
-                }              
-
-                printf("\n");
-            } else { // Stop processing ROW
-                row_start = false;
-                // printf("  <\n");
-            }
-        } else if (c == ',') {
-            if (parse_ok) {
-                real_float = atof(str_float);
-                printf("%.6f ", real_float);
-                elem_size++;
-                memset(str_float, 0, FLOAT_DIGIT);
-                str_float_idx = 0;
-            }
-        } else if (c == '\n') {
-            row_start = false;
-            col_start = false;
-            memset(str_float, 0, FLOAT_DIGIT);
-            str_float_idx = 0;
-            parse_ok = false;
-            printf("shape [%d, %d]\n", row_size, elem_size/row_size+1);
-            elem_size = 0;
-            row_size = 0;
-            printf("\n");
-        } else {
-            str_float[str_float_idx] = c;
-            str_float_idx++;
-            parse_ok = true;
+            if (strcmp(act_name, "relu") == 0) {
+                layer->func = ACTIVATION_RELU;
+            } else if (strcmp(act_name, "sigmoid") == 0) {
+                layer->func = ACTIVATION_SIGMOID;
+            } else if (strcmp(act_name, "tanh") == 0) {
+                layer->func = ACTIVATION_TANH;
+            } else if (strcmp(act_name, "linear") == 0) {
+                layer->func = ACTIVATION_LINEAR;
+            } else if (strcmp(act_name, "leaky") == 0) {
+                layer->func = ACTIVATION_LEAKYRELU;
+            } 
         }
+        
+        file_row_count++;
     }
 
-    char act_fname[64] = "tests/acts_xor.txt";
-    int layer_count = getLayerCount(act_fname);
-    printf("layer_count: %d\n", layer_count);
+    free(line);
+    fclose(f);
+}
 
-    activation *funcs = (activation *)malloc(layer_count * sizeof(activation));
-    getActivation(act_fname, funcs);
+/* Create network from file */
+dense_network_t *createNetworkFromFile(char *weight_fname, char *act_fname) {
+    
+    // Get layer count
+    int layer_count = getLayerCountFromFile(act_fname);
 
-    for (int i = 0; i < layer_count; i++) {
-        printf("layer-%d activation: %d\n", i+1, funcs[i]);
-    }
-
-    char weight_fname[64] = "tests/weights_xor.txt";
+    // Get network configuration
     int *layers = (int *)malloc((layer_count + 1) * sizeof(int));
-    getLayerUnits(weight_fname, layers);
+    getLayerUnitsWithInputFromFile(weight_fname, layers);
+    
+    // Build network
+    dense_network_t *dense_net = (dense_network_t *)malloc(sizeof(dense_network_t));
+    dense_net->layer_count = layer_count;
+    dense_net->layers = (dense_layer_t **)malloc((dense_net->layer_count) * sizeof(dense_layer_t *));
 
-    for (int i = 0; i < layer_count + 1; i++) {
-        printf("Layer-%d units: %d\n", i, layers[i]);
+    for (int layer_idx = 0; layer_idx < dense_net->layer_count; layer_idx++) {
+        dense_net->layers[layer_idx] = denseLayerInit(layers[layer_idx], layers[layer_idx+1], INIT_ONE, ACTIVATION_RELU);
+
+        // Modify weight
+        updateLayerWeightsFromFile(weight_fname, dense_net->layers[layer_idx], layer_idx);
+        
+        // Modify activation function
+        updateLayerActivationFromFile(act_fname, dense_net->layers[layer_idx], layer_idx);
     }
-    
-    
-    for (int layer_idx = 0; layer_idx < layer_count; layer_idx++) {
-        printf("layer-idx [%d]\n", layer_idx);
-        dense_layer_t *test_layer = denseLayerInit(layers[layer_idx], layers[layer_idx+1], INIT_ONE, ACTIVATION_RELU);
 
-        /* Modify weight */
-        updateLayerWeightsFromFile("tests/weights_xor.txt", test_layer, layer_idx);
-
-        denseLayerShow(*test_layer);
-        denseLayerDeinit(test_layer);
-    }
-
-    
-    free(funcs);
     free(layers);
 
+    return dense_net;
+}
 
 
-    return 0;
+/* Show created network */
+void denseNetworkShow(dense_network_t dense_net) {
+    for (int layer_idx = 0; layer_idx < dense_net.layer_count; layer_idx++) {
+        denseLayerShow(*dense_net.layers[layer_idx]);
+    }
+}
+
+
+/* Deinitialized created network */
+void denseNetworkDeinit(dense_network_t *dense_net) {
+    for (int layer_idx = 0; layer_idx < dense_net->layer_count; layer_idx++) {
+        denseLayerDeinit(dense_net->layers[layer_idx]);
+    }
+    free(dense_net->layers);
+    free(dense_net);
+}
+
+
+/* Network inference */
+dense_input_t *getNetworkPredict(dense_network_t network, dense_input_t x) {
+    dense_layer_t *this_layer;
+    dense_input_t *a = &x;
+
+    for (int layer_idx = 0; layer_idx < network.layer_count; layer_idx++) {
+        this_layer = network.layers[layer_idx];
+        dense_input_t *a_temp = a;
+        a = denseForwardStep(*a, *this_layer);
+
+        if (layer_idx > 0) {
+            denseInputDeinit(a_temp);
+        }
+    }
+    return a;
 }

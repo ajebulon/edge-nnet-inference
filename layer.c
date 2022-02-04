@@ -21,7 +21,7 @@ void denseInputDeinit(dense_input_t *this) {
 void denseInputShow(dense_input_t this) {
     printf("x.shape = (%d, 1)\n", this.x_count);
     for (int i = 0; i < this.x_count; i++) {
-        printf(" > x[%d] = %.2f\n", i, this.x[i]);
+        printf(" > x[%d] = %.6f\n", i, this.x[i]);
     }
 }
 
@@ -62,15 +62,15 @@ void denseLayerDeinit(dense_layer_t *this) {
 
 /* Dense layer object show */
 void denseLayerShow(dense_layer_t this) {
-    printf("w.shape = (%d, %d)\n", this.this_num_unit, this.prev_num_unit);
+    printf("w.shape = (%d, %d) | activation: %d\n", this.this_num_unit, this.prev_num_unit, this.func);
     for (int row = 0; row < this.this_num_unit; row++) {
         for (int col = 0; col < this.prev_num_unit; col++) {
-            printf(" > w[%d][%d] = %.2f\n", row, col, this.w[row][col]);
+            printf(" > w[%d][%d] = %.6f\n", row, col, this.w[row][col]);
         }
     }
     printf("b.shape = (%d, 1)\n", this.this_num_unit);
     for (int row = 0; row < this.this_num_unit; row++) {
-        printf(" > b[%d] = %.2f\n", row, this.b[row]);
+        printf(" > b[%d] = %.6f\n", row, this.b[row]);
     }
 }
 
