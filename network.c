@@ -321,6 +321,16 @@ void denseNetworkShow(dense_network_t dense_net) {
     }
 }
 
+/* Get number of trainable parameters */
+uint32_t getDenseNetworkNumOfTrainableParams(dense_network_t dense_net) {
+    uint32_t num = 0;
+    for (int layer_idx = 0; layer_idx < dense_net.layer_count; layer_idx++) {
+        num += dense_net.layers[layer_idx]->this_num_unit * dense_net.layers[layer_idx]->prev_num_unit;
+        num += dense_net.layers[layer_idx]->this_num_unit;
+    }
+
+    return num;
+}
 
 /* Deinitialized created network */
 void denseNetworkDeinit(dense_network_t *dense_net) {

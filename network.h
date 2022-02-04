@@ -36,6 +36,9 @@ dense_network_t *createNetworkFromFile(char *weight_fname, char *act_fname);
 /* Show created network */
 void denseNetworkShow(dense_network_t dense_net);
 
+/* Get number of trainable parameters */
+uint32_t getDenseNetworkNumOfTrainableParams(dense_network_t dense_net);
+
 /* Deinitialized created network */
 void denseNetworkDeinit(dense_network_t *dense_net);
 

@@ -14,6 +14,7 @@ int main(int argc, char *argv[]) {
     dense_network_t *dense_net = NULL;
     dense_net = createNetworkFromFile(weight_fname, act_fname);
     printf("Network\n==============================\n");
+    printf("Total trainable params: %d\n", getDenseNetworkNumOfTrainableParams(*dense_net));
     denseNetworkShow(*dense_net);
     printf("\n");
 
