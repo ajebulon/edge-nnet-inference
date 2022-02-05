@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/time.h> // gettimeofday
+#include <unistd.h> // getopt
 
 #include "network.h"
 
@@ -12,6 +13,16 @@ static double get_time_delta_in_ms(struct timeval ts, struct timeval te)
 
 int main(int argc, char *argv[]) {
 
+    int argret;
+    uint32_t epochs = 1e5;
+    while ((argret = getopt(argc, argv, "e:")) != -1) {
+        switch (argret) {
+            case 'e':
+                epochs = atoi(optarg);
+                break;
+        }
+    }
+
     /* Given input filename of activation function and weights */
     char act_fname[64] = "tests/acts_mix.txt";
     char weight_fname[64] = "tests/weights_mix.txt";
@@ -22,7 +33,7 @@ int main(int argc, char *argv[]) {
     printf("Network\n==============================\n");
     printf("Total trainable params: %d\n", getDenseNetworkNumOfTrainableParams(*dense_net));
 
-    uint32_t epochs = 1e4;
+    
     struct timeval start, now;
     gettimeofday(&start, NULL);
     for (int epoch = 0; epoch < epochs; epoch++) {

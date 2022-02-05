@@ -10,7 +10,6 @@ import time
 import psutil
 
 # Limit to single thread only
-psutil.cpu_count
 psutil.cpu_count()
 p = psutil.Process()
 p.cpu_affinity()
@@ -102,6 +101,17 @@ def getNetworkPredict(network, x):
     
     return a
 
+import argparse
+
+
+parser = argparse.ArgumentParser()
+parser.add_argument('-e', '--epoch')
+args = parser.parse_args()
+
+EPOCH = 100000
+if args.epoch is not None:
+    EPOCH = int(args.epoch)
+
 gate = 'mix'
 weight_fname = 'weights_{}.txt'.format(gate)
 act_fname = 'acts_{}.txt'.format(gate)
@@ -111,7 +121,6 @@ print("Network\n==============================");
 print("Total trainable params: {}".format(getNumOfTrainableParams(network)))
 
 x = np.array([[5], [1], [0]])
-EPOCH = 10000
 time_s = time.time()
 for i in range(EPOCH):
     
@@ -121,4 +130,3 @@ for i in range(EPOCH):
 
 print("Finished {} epochs in {:.3f}s".format(EPOCH, time.time()-time_s))
 print("  > Each inference takes {:.3f}us".format((time.time()-time_s)/EPOCH*1e6))
-
